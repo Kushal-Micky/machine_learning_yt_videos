@@ -1,0 +1,148 @@
+class Puzzle:
+    def __init__(self, present_state, solution_state, num):
+        self.present_state = present_state
+        self.solution_state = solution_state
+        self.num = num
+
+    def main(self):
+        while True:
+            print("Please select a choice:\n1. Input present state\n2. Input solution state")
+            print("3. Display present state and solution state\n4. Get steps to solve\n5. Exit\n")
+            choice = int(input("Enter choice: "))
+            if choice == 1:
+                self.input_present_state()
+            elif choice == 2:
+                self.input_solution_state()
+            elif choice == 3:
+                self.display()
+            elif choice == 4:
+                self.show_steps()
+            elif choice == 5:
+                print("Exiting...")
+                break
+            else:
+                print("Wrong choice, try again")
+
+    def display(self):
+        print("Present state:")
+        for row in self.present_state:
+            print(row)
+        print("\nSolution state:")
+        for row in self.solution_state:
+            print(row)
+        print()
+
+    def input_present_state(self):
+        print("\nPlease enter the numbers in sequence:")
+        for i in range(3):
+            for j in range(3):
+                self.present_state[i][j] = int(input(f"[{i}][{j}]: "))
+
+    def input_solution_state(self):
+        print("Please enter the numbers in sequence:")
+        for i in range(3):
+            for j in range(3):
+                self.solution_state[i][j] = int(input(f"[{i}][{j}]: "))
+
+    def show_steps(self):
+        visited_states = []
+        while True:
+            if self.present_state == self.solution_state:
+                print("No need to solve as present and solution state are equal")
+                break
+            print("Given present state:")
+            self.pretty_print(self.present_state)
+            visited_states.append(self.present_state)
+            
+            print("\nNew possible combinations:")
+            combinations = self.combination(self.present_state)
+            heuristics = self.count_maker(combinations)
+            
+            for i, state in enumerate(combinations):
+                self.pretty_print(state)
+                print(f"Heuristic value: {heuristics[i]}\n")
+            
+            combinations, heuristics = zip(*sorted(zip(combinations, heuristics), key=lambda x: x[1]))
+            
+            for state in combinations:
+                if state not in visited_states:
+                    print(f"Choosing heuristic value with lowest count: {heuristics[combinations.index(state)]}")
+                    self.pretty_print(state)
+                    visited_states.append(state)
+                    self.present_state = state
+                    break
+            
+            print("\n-----------------------------------------------------------")
+            if self.present_state == self.solution_state:
+                break
+
+    def pretty_print(self, state):
+        for row in state:
+            print(row)
+    
+    def getloc(present_state, num):
+        for i in range(len(present_state)):
+            for j in range(len(present_state[i])):
+                if present_state[i][j] == num:
+                    return [i, j]
+        raise ValueError(f"Number {num} not found in the puzzle state")
+
+
+    def combination(self, state):
+        moves = self.next_move(state)
+        generated_states = []
+        zero_pos = self.get_location(state, self.num)
+        
+        for move in moves:
+            new_state = [row[:] for row in state]
+            new_state[zero_pos[0]][zero_pos[1]], new_state[move[0]][move[1]] = new_state[move[0]][move[1]], new_state[zero_pos[0]][zero_pos[1]]
+            generated_states.append(new_state)
+        
+        return generated_states
+
+    def next_move(self, state):
+        zero_pos = self.get_location(state, self.num)
+        possible_moves = []
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        
+        for dx, dy in directions:
+            new_x, new_y = zero_pos[0] + dx, zero_pos[1] + dy
+            if 0 <= new_x < 3 and 0 <= new_y < 3:
+                possible_moves.append((new_x, new_y))
+        
+        return possible_moves
+
+    def get_location(self, state, num):
+        for i in range(3):
+            for j in range(3):
+                if state[i][j] == num:
+                    return (i, j)
+
+    def count_maker(self, states):
+        return [self.heuristic_count(state) for state in states]
+
+    def heuristic_count(self, state):
+        count = 0
+        for i in range(3):
+            for j in range(3):
+                if state[i][j] != self.solution_state[i][j]:
+                    count += 1
+        return count
+
+
+present_state = [
+    [1, 2, 3],
+    [0, 4, 6],
+    [7, 5, 8]
+]
+
+solution_state = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 0]
+]
+
+num = 0
+
+puzzle = Puzzle(present_state, solution_state, num)
+puzzle.main()
